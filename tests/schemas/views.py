@@ -3,6 +3,7 @@ from rest_framework.views import APIView
 
 
 class ExampleListView(APIView):
+
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     def get(self, *args, **kwargs):

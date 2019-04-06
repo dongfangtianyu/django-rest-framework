@@ -58,7 +58,11 @@ class TestOperationIntrospection(TestCase):
         assert operation == {
             'operationId': 'ListExamples',
             'parameters': [],
-            'responses': {'200': {'content': {'application/json': {'schema': {}}}}},
+            'responses': {'200': {
+                'description': "",
+                'content': {'application/json': {'schema': {}}}
+            }
+            },
         }
 
     def test_path_with_id_parameter(self):
@@ -166,3 +170,36 @@ class TestGenerator(TestCase):
 
         assert 'openapi' in schema
         assert 'paths' in schema
+
+    def test_response_construction(self):
+        """Construction of the response dictionary."""
+
+        class ExampleListView(views.APIView):
+
+            """
+            get:
+            I'm a get method
+            """
+
+            def get(self, *args, **kwargs):
+                pass
+
+            def post(self, request, *args, **kwargs):
+                """I'm a post method"""
+                pass
+
+        patterns = [
+            url(r'^example/?$', ExampleListView.as_view()),
+        ]
+        generator = SchemaGenerator(patterns=patterns)
+
+        request = create_request('/')
+        schema = generator.get_schema(request=request)
+
+        for path in schema.get("paths").values():
+            for method, method_response in path.items():
+                for response in method_response.get("responses").values():
+                    assert 'description' in response
+                    assert 'content' in response
+                    #  docstring in the view or viewset， so only assert description content
+                    assert response['description'] == f"I'm a {method} method"
